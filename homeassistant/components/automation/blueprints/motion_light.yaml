@@ -25,18 +25,35 @@ blueprint:
           min: 0
           max: 3600
           unit_of_measurement: seconds
+          
+    elevation_check:
+      name: Sun elevation check
+      description: This is the angle between the sun and the horizon. Negative values mean the sun is BELOW the horizon.
+      default: none
+      selector:
+        number:
+          min: -90
+          max: 90
+          unit_of_measurement: degrees
 
 # If motion is detected within the delay,
 # we restart the script.
 mode: restart
 max_exceeded: silent
 
+variables:
+  elevation_check: !input elevation_check
+  
 trigger:
   platform: state
   entity_id: !input motion_entity
   from: "off"
   to: "on"
 
+condition:
+  - condition: template
+    value_template: "{{ (elevation_check == none) or (state_attr('sun.sun','elevation') <= elevation_check | float(90)) }}"
+    
 action:
   - alias: "Turn on the light"
     service: light.turn_on
